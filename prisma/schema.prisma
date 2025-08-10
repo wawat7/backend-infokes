@@ -1,0 +1,29 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  email    String @unique
+  password String
+}
+
+
+model File {
+  id   Int      @id @default(autoincrement())
+  parent_id Int?
+  file_name String
+  file_type String
+  file_size BigInt?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  is_hidden Boolean  @default(false)
+
+  @@index([parent_id])
+}
