@@ -1,8 +1,10 @@
 import { FileService } from "../services/file.service";
 import { Context } from "elysia";
+import RedisConnection from "../database/redis"
 
 
 const fileService = new FileService();
+const redis = RedisConnection.getInstance();
 
 export async function createFolder(ctx: {
   body: {
@@ -26,11 +28,20 @@ export async function createFolder(ctx: {
 export async function getList(ctx: Context) {
     const { id } = ctx.params;
     try {
+        if (await redis.exists(`files:${id}`)) {
+            const cachedFiles = await redis.get(`files:${id}`);
+            if (cachedFiles) {
+                const files = JSON.parse(cachedFiles);
+                ctx.set.status = 200;
+                return files;
+            }
+        }
         const files = await fileService.getAllFiles(parseInt(id));
         const serializedFiles = files.map(file => ({
             ...file,
             file_size: file.file_size ? file.file_size.toString() : "0",
         }));
+        await redis.set(`files:${id}`, JSON.stringify(serializedFiles));
         ctx.set.status = 200;
         return serializedFiles;
     } catch (error) {
@@ -69,6 +80,7 @@ export async function uploadFile(ctx: {
         file_original.type,
         file_original.size
     );
+    await redis.del(`files:${parent_id}`);
     ctx.set.status = 201;
     return {};
   } catch (error) {

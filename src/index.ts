@@ -1,32 +1,25 @@
 import { Elysia } from "elysia";
-import { createUser, getUserById, getAllUsers, updateUser, deleteUser } from "./controllers/user.controller";
-import { UserCreateModels } from "./models/user.model";
+import { swagger } from '@elysiajs/swagger'
 import { createFolder, getList, getFile, uploadFile } from "./controllers/file.controller";
 import { FolderCreateModels, FileCreateModels } from "./models/file.model";
 
 const app = new Elysia()
-  .post("/users", async (ctx) => createUser(ctx), {
-    body: UserCreateModels,
-    tags: ["User"],
-    type: "multipart/form-data",
-  })
-  .get("/users/:id", getUserById)
-  .get("/users", getAllUsers)
-  .put("/users/:id", updateUser)
-  .delete("/users/:id", deleteUser)
-
-
+  .use(swagger())
   .post("/folders", async (ctx) => createFolder(ctx), {
     body: FolderCreateModels,
     tags: ["Folder"],
   })
-  .get("/folders/:id", getList)
+  .get("/folders/:id", async (ctx) => getList(ctx), {
+    tags: ["Folder"],
+  })
   .post("/files", async (ctx) => uploadFile(ctx), {
     body: FileCreateModels,
     tags: ["File"],
     type: "multipart/form-data",
   })
-  .get("/files/:id", getFile)
+  .get("/files/:id", async (ctx) => getFile(ctx), {
+    tags: ["File"],
+  })
   .listen(3000);
   
 
